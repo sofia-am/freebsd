@@ -4,11 +4,11 @@
 GLOBAL VARIABLES
 */
 const int matrix_Incidence[PLACES_SIZE][TRANSITIONS_SIZE] = {
-	{-1,  0,  0,  0,  0,  0 ,  0},
-	{ 1, -1,  0,  1,  0,  1 ,  1},
-	{ 0,  1, -1,  0,  0,  0 , -1},
-	{ 0,  0,  1, -1, -1,  0 ,  0},
-	{ 0,  0,  0,  0,  1, -1 ,  0}
+	{-1,  0,  0,  0,  0,  0 ,  0}, //inactive
+	{ 1, -1,  0,  1,  0,  1 ,  1}, //can_run
+	{ 0,  1, -1,  0,  0,  0 , -1}, //runq
+	{ 0,  0,  1, -1, -1,  0 ,  0}, //running
+	{ 0,  0,  0,  0,  1, -1 ,  0}  //inhibited
 };
 
 const int initial_mark[PLACES_SIZE] = { 0, 1, 0, 0, 0 };
@@ -16,29 +16,49 @@ const int initial_mark[PLACES_SIZE] = { 0, 1, 0, 0, 0 };
 __inline int
 thread_transition_is_sensitized(struct thread *pt, int transition_index);
 
-
+/**
+ * @brief esta funcion recibe un thread como parametro y procede a 
+ * inicializar su mark al marcado inicial
+ * 
+ * @param pt_thread 
+ */
 void
-init_petri_thread(struct thread *pt_thread){
+init_petri_thread(struct thread *pt_thread){ 
 	// Create a new petr_thread structure
 	int i;
 	for (i = 0; i < PLACES_SIZE; i++) {
 		pt_thread->mark[i] = initial_mark[i];
-	}
-	pt_thread->td_frominh = 0;
+	}//mark: vector que tiene el marcado inicial, con tamaño PLACES SIZE.
+	pt_thread->td_frominh = 0; // (flag) Thread comes from an inhibited state
 }
 
+/**
+ * @brief recibe un thread como parámetro y analiza todas sus 
+ * transiciones para actualizar su sensitized_buffer
+(función no utilizada).
+ * 
+ * @param pt 
+ */
 void
 thread_get_sensitized(struct thread *pt)
 {
 	int k;
 	for(k=0; k< TRANSITIONS_SIZE; k++){
 		if(thread_transition_is_sensitized(pt, k))
-			pt->sensitized_buffer[k] = 1;
+			pt->sensitized_buffer[k] = 1; 
+/* sensitized_buffer: vector que representa las transiciones sensibili-
+zadas de su red asociada, con tamaño TRANSITIONS SIZE.*/
 		else
 			pt->sensitized_buffer[k] = 0;
 	}
 };
-
+/**
+ * @brief 
+ * 
+ * @param pt 
+ * @param transition_index 
+ * @return __inline 
+ */
 __inline int
 thread_transition_is_sensitized(struct thread *pt, int transition_index)
 {
@@ -53,17 +73,23 @@ thread_transition_is_sensitized(struct thread *pt, int transition_index)
 			return 0;
 		}
 	}
-
 	return 1;
-
 }
 
+/**
+ * @brief recibe un thread y una transición como paráme-
+tros y la dispara haciendo uso de la matriz de incidencia, actualizando
+finalmente su marcado.
+ * 
+ * @param pt 
+ * @param transition 
+ */
 void
 thread_petri_fire(struct thread *pt, int transition)
 {
 	int i;
 	if(thread_transition_is_sensitized(pt, transition)){
-		for(i=0; i< PLACES_SIZE; i++)
+		for(i=0; i < PLACES_SIZE; i++)
 			pt->mark[i] += matrix_Incidence[i][transition];
 	}
 	else
@@ -76,6 +102,14 @@ thread_petri_fire(struct thread *pt, int transition)
 
 
 /*This method is not used yet */
+
+/**
+ * @brief recibe un thread como parámetro y calcula sus transiciones 
+ * sensibilizadas para proceder a dispararlas (función
+no utilizada).
+ * 
+ * @param pt 
+ */
 static void
 thread_search_and_fire(struct thread *pt){
 	int i;
